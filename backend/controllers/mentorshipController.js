@@ -8,7 +8,7 @@ const InteractionLog = require('../models/InteractionLog');
  */
 const getStudents = async (req, res) => {
   try {
-    const students = await Student.find({});
+    const students = await Student.find().select('-__v');
     return res.status(200).json({
       success: true,
       count: students.length,
@@ -30,8 +30,7 @@ const getStudents = async (req, res) => {
  */
 const getStudentDetails = async (req, res) => {
   try {
-    const { id } = req.params;
-    const student = await Student.findById(id).populate('interactionLogs');
+    const student = await Student.findById(req.params.id).populate('logs');
     
     if (!student) {
       return res.status(404).json({
@@ -45,6 +44,12 @@ const getStudentDetails = async (req, res) => {
       data: student
     });
   } catch (error) {
+    if (error.name === 'CastError') {
+      return res.status(404).json({
+        success: false,
+        message: 'Student not found (invalid ID format)'
+      });
+    }
     return res.status(500).json({
       success: false,
       message: 'Failed to retrieve student details',
@@ -60,28 +65,17 @@ const getStudentDetails = async (req, res) => {
  */
 const updateLogStatus = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { status } = req.body;
-
-    if (!status) {
+    if (!req.body.status) {
       return res.status(400).json({
         success: false,
         message: 'Status is required'
       });
     }
 
-    const validStatuses = ['pending_review', 'completed'];
-    if (!validStatuses.includes(status)) {
-      return res.status(400).json({
-        success: false,
-        message: `Invalid status. Must be one of: ${validStatuses.join(', ')}`
-      });
-    }
-
     const updatedLog = await InteractionLog.findByIdAndUpdate(
-      id,
-      { status },
-      { new: true, runValidators: true }
+      req.params.id,
+      { status: req.body.status },
+      { new: true }
     );
 
     if (!updatedLog) {
@@ -96,6 +90,12 @@ const updateLogStatus = async (req, res) => {
       data: updatedLog
     });
   } catch (error) {
+    if (error.name === 'CastError') {
+      return res.status(404).json({
+        success: false,
+        message: 'Interaction log not found (invalid ID format)'
+      });
+    }
     return res.status(500).json({
       success: false,
       message: 'Failed to update interaction log status',
@@ -104,8 +104,44 @@ const updateLogStatus = async (req, res) => {
   }
 };
 
+/**
+ * @desc    Create a new interaction log
+ * @route   POST /api/logs
+ * @access  Private/Admin
+ */
+const createLog = async (req, res) => {
+  try {
+    const { studentId, summary, status } = req.body;
+    
+    if (!studentId || !summary) {
+      return res.status(400).json({
+        success: false,
+        message: 'Student ID and summary are required'
+      });
+    }
+
+    const newLog = await InteractionLog.create({
+      studentId,
+      summary,
+      status: status || 'completed'
+    });
+
+    return res.status(201).json({
+      success: true,
+      data: newLog
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to create interaction log',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   getStudents,
   getStudentDetails,
-  updateLogStatus
+  updateLogStatus,
+  createLog
 };

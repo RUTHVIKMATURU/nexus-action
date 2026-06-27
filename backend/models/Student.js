@@ -33,7 +33,7 @@ const studentSchema = new mongoose.Schema({
 });
 
 // Virtual populate to link interaction logs to the student
-studentSchema.virtual('interactionLogs', {
+studentSchema.virtual('logs', {
   ref: 'InteractionLog',
   localField: '_id',
   foreignField: 'studentId'
