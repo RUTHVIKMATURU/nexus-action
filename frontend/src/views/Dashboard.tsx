@@ -600,7 +600,7 @@ export const Dashboard: React.FC = () => {
                           No prior interactions.
                         </p>
                       ) : (
-                        selectedLead.interactions.map((interaction: SalesInteraction, idx) => (
+                        selectedLead.interactions.map((interaction: SalesInteraction) => (
                           <div key={interaction._id} className="relative z-10 flex items-start gap-4 text-left">
                             <div className="w-6 h-6 rounded-full bg-[#15161f] border-2 border-[#1e2030] flex items-center justify-center flex-shrink-0 mt-0.5">
                               <span className="w-1.5 h-1.5 rounded-full bg-gray-500" />
