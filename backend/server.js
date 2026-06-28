@@ -2,7 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
-const mentorshipRoutes = require('./routes/mentorshipRoutes');
+const salesRoutes = require('./routes/salesRoutes');
 
 const app = express();
 
@@ -50,7 +50,7 @@ mongoose.connect(process.env.MONGODB_URI)
     .catch((err) => console.error('MongoDB connection error:', err));
 
 // Routes (Protected)
-app.use('/api', mentorshipRoutes);
+app.use('/api/sales', salesRoutes);
 
 const PORT = process.env.PORT;
 

@@ -10,8 +10,8 @@ from app.config import settings
 
 app = FastAPI(
     title="NexusAction AI Engine",
-    description="FastAPI + LangGraph backend for orchestrating student mentorship workflows.",
-    version="1.0.0"
+    description="FastAPI + LangGraph backend for orchestrating B2B sales intelligence workflows.",
+    version="2.0.0"
 )
 
 # Configure CORS
@@ -27,36 +27,39 @@ app.add_middleware(
 
 # Input payload model
 class AnalyzeRequest(BaseModel):
-    student_id: str
+    lead_id: str
 
 # Output response model
 class AnalyzeResponse(BaseModel):
-    student_id: str
+    lead_id: str
     history: List[Any]
-    retrieved_context: List[Any]
-    current_plan: List[Any]
-    recommendations: List[Any]
-    requires_review: bool
+    lead_context: Dict[str, Any] = {}
+    sales_playbooks: List[Any] = []
+    extracted_signals: List[Any] = []
+    next_best_action: Dict[str, Any] = {}
+    requires_review: bool = False
 
 @app.post("/api/engine/analyze", response_model=AnalyzeResponse)
-async def analyze_student(request: AnalyzeRequest):
+async def analyze_lead(request: AnalyzeRequest):
     """
-    Invokes the LangGraph orchestration flow for a given student ID.
-    Returns the processed state after executing all nodes.
+    Invokes the LangGraph orchestration flow for a given lead ID.
+    Returns the processed state after executing all nodes:
+    planner -> retriever (firmographic data + playbook matching) -> reasoner.
     """
     try:
-        # Initialize graph state
+        # Initialize graph state with B2B sales fields
         initial_state = {
-            "student_id": request.student_id,
+            "lead_id": request.lead_id,
             "history": [],
-            "retrieved_context": [],
-            "current_plan": [],
-            "recommendations": [],
-            "requires_review": False
+            "lead_context": {},
+            "sales_playbooks": [],
+            "extracted_signals": [],
+            "next_best_action": {},
+            "requires_review": False,
         }
         
         # Invoke the LangGraph workflow asynchronously
-        # This will run planner -> retriever -> reasoner sequentially
+        # planner -> retriever -> reasoner
         result = await compiled_graph.ainvoke(initial_state)
         
         return result

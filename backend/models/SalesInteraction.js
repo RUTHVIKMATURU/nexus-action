@@ -1,12 +1,12 @@
 const mongoose = require('mongoose');
 
-const interactionLogSchema = new mongoose.Schema({
-  studentId: {
+const salesInteractionSchema = new mongoose.Schema({
+  leadId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Student',
+    ref: 'Lead',
     required: true
   },
-  summary: {
+  rawTranscript: {
     type: String,
     required: true,
     trim: true
@@ -18,7 +18,6 @@ const interactionLogSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['pending_review', 'completed'],
     default: 'pending_review',
     required: true
   }
@@ -27,4 +26,4 @@ const interactionLogSchema = new mongoose.Schema({
   strict: true
 });
 
-module.exports = mongoose.model('InteractionLog', interactionLogSchema);
+module.exports = mongoose.model('SalesInteraction', salesInteractionSchema);

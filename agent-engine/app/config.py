@@ -7,7 +7,7 @@ try:
     
     class Settings(BaseSettings):
         PORT: int
-        LLM_API_KEY: str
+        LLM_API_KEYS: str
 
         model_config = SettingsConfigDict(
             env_file=".env",
@@ -20,7 +20,7 @@ except ImportError:
     
     class Settings(BaseSettings):
         PORT: int
-        LLM_API_KEY: str
+        LLM_API_KEYS: str
 
         class Config:
             env_file = ".env"

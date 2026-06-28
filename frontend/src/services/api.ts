@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Pull base URLs from Vite's import.meta.env with safe local fallback defaults
-const EXPRESS_API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+const EXPRESS_API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/sales';
 const AI_ENGINE_URL = import.meta.env.VITE_ENGINE_BASE_URL || 'http://localhost:8000/api/engine';
 
 // Axios instance for the Express Core Backend
@@ -42,110 +42,148 @@ aiEngineApi.interceptors.request.use(async (config) => {
   return config;
 }, (error) => Promise.reject(error));
 
-// TypeScript Interfaces for type safety
-export interface Student {
+// ---------------------------------------------------------------------------
+// TypeScript Interfaces — B2B Sales Domain
+// ---------------------------------------------------------------------------
+
+export interface Lead {
   _id: string;
-  name: string;
-  email: string;
-  currentYear: number;
-  skills: string[];
-  interests: string[];
-  logs?: InteractionLog[];
+  companyName: string;
+  industry: string;
+  estimatedBudget: number;
+  currentVendor: string;
+  decisionMaker: string;
   createdAt?: string;
   updatedAt?: string;
 }
 
-export interface InteractionLog {
+export interface SalesInteraction {
   _id: string;
-  studentId: string;
-  summary: string;
+  leadId: string;
+  rawTranscript: string;
   timestamp: string;
-  status: 'pending_review' | 'completed';
+  status: 'pending_review' | 'approved' | 'rejected' | 'completed';
   createdAt?: string;
   updatedAt?: string;
+}
+
+export interface LeadWithInteractions extends Lead {
+  interactions: SalesInteraction[];
 }
 
 export interface NextBestAction {
-  recommendation: string;
-  reasoning: string;
+  action: string;
+  reasoning_justification: string;
   confidence_score: number;
 }
 
+export interface SalesPlaybookEntry {
+  scenario_name: string;
+  target_industry: string;
+  recommended_action: string;
+  discount_cap: number;
+}
+
+export interface ExtractedSignal {
+  signal_type: string;
+  detail: string;
+  source_interaction_id: string;
+  confidence: number;
+}
+
 export interface AnalyzeResponse {
-  student_id: string;
+  lead_id: string;
   history: Array<{
     node: string;
     message: string;
     status: string;
     timestamp?: string;
   }>;
-  retrieved_context: Array<{
-    category: string;
-    title?: string;
-    content?: string;
-    criteria?: string;
-    matches?: string[];
-  }>;
-  current_plan: string[];
-  recommendations: NextBestAction[];
+  lead_context: {
+    lead_id: string;
+    company_name: string;
+    industry: string;
+    estimated_budget: number;
+    current_vendor: string;
+    decision_maker: string;
+    interactions: Array<{
+      interaction_id: string;
+      raw_transcript: string;
+      status: string;
+      timestamp: string;
+    }>;
+  };
+  sales_playbooks: SalesPlaybookEntry[];
+  extracted_signals: ExtractedSignal[];
+  next_best_action: NextBestAction;
   requires_review: boolean;
 }
 
+// ---------------------------------------------------------------------------
+// Express Backend API calls — B2B Sales
+// ---------------------------------------------------------------------------
+
 /**
- * Fetches the list of all students from the Express backend.
+ * Fetches the list of all leads from the Express backend.
  */
-export const fetchStudents = async (): Promise<Student[]> => {
-  const response = await expressApi.get<{ success: boolean; count: number; data: Student[] }>('/students');
+export const fetchLeads = async (): Promise<Lead[]> => {
+  const response = await expressApi.get<{ success: boolean; count: number; data: Lead[] }>('/leads');
   return response.data.data;
 };
 
 /**
- * Fetches a single student's details, including populated interaction logs.
- * @param id The Student's unique ID.
+ * Fetches a single lead's details, including populated SalesInteraction history.
+ * @param id The Lead's unique ID.
  */
-export const fetchStudentDetails = async (id: string): Promise<Student> => {
-  const response = await expressApi.get<{ success: boolean; data: Student }>(`/students/${id}`);
+export const fetchLeadDetails = async (id: string): Promise<LeadWithInteractions> => {
+  const response = await expressApi.get<{ success: boolean; data: LeadWithInteractions }>(`/leads/${id}`);
   return response.data.data;
 };
 
 /**
- * Updates an interaction log's status (approving or completing a recommendation).
- * @param logId The ID of the interaction log.
- * @param status The new status value ('pending_review' | 'completed').
+ * Updates a SalesInteraction's workflow status (approve or reject).
+ * @param interactionId The ID of the SalesInteraction.
+ * @param status The new status value ('approved' | 'rejected').
  */
-export const submitReviewStatus = async (
-  logId: string,
-  status: 'pending_review' | 'completed'
-): Promise<InteractionLog> => {
-  const response = await expressApi.patch<{ success: boolean; data: InteractionLog }>(`/logs/${logId}`, {
-    status,
-  });
+export const updateInteractionStatus = async (
+  interactionId: string,
+  status: 'approved' | 'rejected'
+): Promise<SalesInteraction> => {
+  const response = await expressApi.patch<{ success: boolean; data: SalesInteraction }>(
+    `/interactions/${interactionId}/status`,
+    { status }
+  );
   return response.data.data;
 };
 
 /**
- * Creates a new interaction log for a student.
+ * Creates a new SalesInteraction (registers an incoming event in MongoDB).
+ * @param leadId The Lead's MongoDB _id.
+ * @param rawTranscript The raw interaction transcript text.
  */
-export const createInteractionLog = async (
-  studentId: string,
-  summary: string,
-  status: 'pending_review' | 'completed' = 'completed'
-): Promise<InteractionLog> => {
-  const response = await expressApi.post<{ success: boolean; data: InteractionLog }>('/logs', {
-    studentId,
-    summary,
-    status
-  });
+export const createSalesInteraction = async (
+  leadId: string,
+  rawTranscript: string
+): Promise<SalesInteraction> => {
+  const response = await expressApi.post<{ success: boolean; data: SalesInteraction }>(
+    '/interactions',
+    { leadId, rawTranscript }
+  );
   return response.data.data;
 };
 
+// ---------------------------------------------------------------------------
+// AI Engine API calls
+// ---------------------------------------------------------------------------
+
 /**
- * Invokes the AI Engine's LangGraph workflow to analyze a student and generate recommendations.
- * @param studentId The student ID to run the analysis workflow for.
+ * Invokes the AI Engine's LangGraph workflow to analyze a lead and generate
+ * the algorithmic Next Best Action recommendation.
+ * @param leadId The lead ID to run the analysis workflow for.
  */
-export const analyzeStudent = async (studentId: string): Promise<AnalyzeResponse> => {
+export const analyzeLead = async (leadId: string): Promise<AnalyzeResponse> => {
   const response = await aiEngineApi.post<AnalyzeResponse>('/analyze', {
-    student_id: studentId,
+    lead_id: leadId,
   });
   return response.data;
 };
