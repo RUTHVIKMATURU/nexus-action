@@ -454,7 +454,7 @@ export const Sandbox: React.FC = () => {
               </div>
 
               {/* Pipeline Trace */}
-              <div className="bg-[#0d0e14] border border-[#1e2030] rounded-xl p-5">
+              <div className="bg-[#0d0e14] border border-[#1e2030] rounded-xl p-5 text-left">
                 <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">
                   Pipeline Execution Trace
                 </h3>
@@ -529,7 +529,7 @@ export const Sandbox: React.FC = () => {
                     Copy to clipboard
                   </button>
                 </div>
-                <pre className="p-5 text-xs text-gray-400 overflow-x-auto max-h-[400px] overflow-y-auto leading-relaxed font-mono">
+                <pre className="p-5 text-xs text-gray-400 overflow-x-auto max-h-[400px] overflow-y-auto leading-relaxed font-mono text-left">
                   {rawJson}
                 </pre>
               </div>
