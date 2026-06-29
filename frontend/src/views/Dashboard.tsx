@@ -56,14 +56,29 @@ const getStatusBadge = (status: string) => {
 // Sub-score parser
 const parseSubScores = (text: string) => {
   let budget = 0, urgency = 0, history = 0;
-  const budgetMatch = text.match(/([0-9]*\.?[0-9]+)\s*[\*×x]\s*0\.40/i);
-  const urgencyMatch = text.match(/([0-9]*\.?[0-9]+)\s*[\*×x]\s*0\.35/i);
-  const historyMatch = text.match(/([0-9]*\.?[0-9]+)\s*[\*×x]\s*0\.25/i);
   
-  if (budgetMatch) budget = parseFloat(budgetMatch[1]);
-  if (urgencyMatch) urgency = parseFloat(urgencyMatch[1]);
-  if (historyMatch) history = parseFloat(historyMatch[1]);
-  
+  const explicitBudget = text.match(/budget_alignment_score[^0-9]*([0-9]*\.?[0-9]+)/i);
+  const explicitUrgency = text.match(/urgency_signal_score[^0-9]*([0-9]*\.?[0-9]+)/i);
+  const explicitHistory = text.match(/historical_playbook_success_rate[^0-9]*([0-9]*\.?[0-9]+)/i);
+
+  if (explicitBudget) budget = parseFloat(explicitBudget[1]);
+  else {
+    const budgetMatch = text.match(/([0-9]*\.?[0-9]+)\s*[\*×x]\s*(?:0\.40|0\.4)/i);
+    if (budgetMatch) budget = parseFloat(budgetMatch[1]);
+  }
+
+  if (explicitUrgency) urgency = parseFloat(explicitUrgency[1]);
+  else {
+    const urgencyMatch = text.match(/([0-9]*\.?[0-9]+)\s*[\*×x]\s*0\.35/i);
+    if (urgencyMatch) urgency = parseFloat(urgencyMatch[1]);
+  }
+
+  if (explicitHistory) history = parseFloat(explicitHistory[1]);
+  else {
+    const historyMatch = text.match(/([0-9]*\.?[0-9]+)\s*[\*×x]\s*0\.25/i);
+    if (historyMatch) history = parseFloat(historyMatch[1]);
+  }
+
   return { budget, urgency, history };
 };
 
@@ -122,7 +137,8 @@ export const Dashboard: React.FC = () => {
 
       // Auto-trigger AI Engine analysis
       setIsAnalyzing(true);
-      const analysis = await analyzeLead(lead._id);
+      setAnalysisError(null);
+      const analysis = await analyzeLead(detailedLead);
       setAiAnalysis(analysis);
     } catch (err: any) {
       console.error('Error fetching lead details or AI analysis:', err);

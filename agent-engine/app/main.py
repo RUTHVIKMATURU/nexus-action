@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from typing import List, Any, Dict
+from typing import List, Any, Dict, Optional
 import uvicorn
 import os
 from fastapi.middleware.cors import CORSMiddleware
@@ -28,6 +28,7 @@ app.add_middleware(
 # Input payload model
 class AnalyzeRequest(BaseModel):
     lead_id: str
+    lead_data: Optional[Dict[str, Any]] = None
 
 # Output response model
 class AnalyzeResponse(BaseModel):
@@ -50,6 +51,7 @@ async def analyze_lead(request: AnalyzeRequest):
         # Initialize graph state with B2B sales fields
         initial_state = {
             "lead_id": request.lead_id,
+            "lead_data": request.lead_data,
             "history": [],
             "lead_context": {},
             "sales_playbooks": [],

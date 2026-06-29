@@ -57,7 +57,7 @@ NexusAction is designed as a reusable platform with the following capabilities:
 ```bash
 cd frontend
 npm install
-# Create a .env file based on .env.example with your Firebase config
+# Create a .env file (use ../.env.example as a reference) with your Firebase config
 npm run dev
 ```
 
@@ -65,7 +65,7 @@ npm run dev
 ```bash
 cd backend
 npm install
-# Create a .env file with your MongoDB URI and Firebase Admin credentials
+# Create a .env file (use ../.env.example as a reference) with your MongoDB URI and Firebase Admin credentials
 npm run dev
 ```
 *(Runs on `http://localhost:5000` or port specified in `.env`)*
@@ -80,7 +80,7 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 # Install dependencies from the requirements file
 pip install -r requirements.txt
 
-# Create a .env file with your API keys (e.g., LLM_API_KEYS=key1,key2)
+# Create a .env file (use ../.env.example as a reference) with your API keys (e.g., LLM_API_KEYS=key1,key2)
 uvicorn app.main:app --reload
 ```
 *(Runs on `http://localhost:8000`)*
@@ -107,8 +107,4 @@ The Python FastAPI engine can be deployed using Docker or directly on platforms 
 
 ---
 
-## 📊 Evaluation & Deliverables
 
-This platform was built to meet the hackathon evaluation criteria:
-*   **Platform (70%)**: Quality of Agentic AI architecture, reusability, memory/orchestration design, user experience, and creativity.
-*   **Business Use Case (30%)**: Understanding of the B2B domain, effectiveness of reasoning, quality of next best actions, and measurable business outcomes.

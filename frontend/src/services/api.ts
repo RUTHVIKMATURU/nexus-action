@@ -176,14 +176,23 @@ export const createSalesInteraction = async (
 // AI Engine API calls
 // ---------------------------------------------------------------------------
 
-/**
- * Invokes the AI Engine's LangGraph workflow to analyze a lead and generate
- * the algorithmic Next Best Action recommendation.
- * @param leadId The lead ID to run the analysis workflow for.
- */
-export const analyzeLead = async (leadId: string): Promise<AnalyzeResponse> => {
+export const analyzeLead = async (lead: LeadWithInteractions): Promise<AnalyzeResponse> => {
   const response = await aiEngineApi.post<AnalyzeResponse>('/analyze', {
-    lead_id: leadId,
+    lead_id: lead._id,
+    lead_data: {
+      lead_id: lead._id,
+      company_name: lead.companyName,
+      industry: lead.industry,
+      estimated_budget: lead.estimatedBudget,
+      current_vendor: lead.currentVendor,
+      decision_maker: lead.decisionMaker,
+      interactions: lead.interactions.map(i => ({
+        interaction_id: i._id,
+        raw_transcript: i.rawTranscript,
+        status: i.status,
+        timestamp: i.timestamp
+      }))
+    }
   });
   return response.data;
 };

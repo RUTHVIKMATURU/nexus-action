@@ -168,15 +168,21 @@ export const Sandbox: React.FC = () => {
       const interaction = await createSalesInteraction(selectedLeadId, transcriptText.trim());
       setCreatedInteraction(interaction);
 
+      const selectedLead = leads.find((l) => l._id === selectedLeadId);
+      if (!selectedLead) throw new Error('Lead not found in local state');
+
       // Step 2: Kick off the automated agent workflow via FastAPI
       setIsAnalyzing(true);
-      const analysis = await analyzeLead(selectedLeadId);
+      const leadForAnalysis = {
+        ...selectedLead,
+        interactions: [interaction]
+      };
+      const analysis = await analyzeLead(leadForAnalysis as any);
       setAiResult(analysis);
       setRawJson(JSON.stringify(analysis, null, 2));
 
-      const selectedLead = leads.find((l) => l._id === selectedLeadId);
       setSuccessMessage(
-        `Interaction registered for ${selectedLead?.companyName || selectedLeadId} and AI pipeline completed successfully.`
+        `Interaction registered for ${selectedLead.companyName || selectedLeadId} and AI pipeline completed successfully.`
       );
     } catch (err: any) {
       console.error('Sandbox submission error:', err);

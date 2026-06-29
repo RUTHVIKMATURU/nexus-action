@@ -36,6 +36,7 @@ class AgentState(BaseModel):
     and the compiled next-best-action recommendation.
     """
     lead_id: str
+    lead_data: Optional[Dict[str, Any]] = None
     history: List[Dict[str, Any]] = Field(default_factory=list)
     lead_context: LeadContext = Field(default_factory=LeadContext)
     sales_playbooks: List[SalesPlaybookEntry] = Field(default_factory=list)

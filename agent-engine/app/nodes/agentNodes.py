@@ -244,10 +244,11 @@ async def retriever_node(state: Union[AgentState, Dict[str, Any]]) -> Dict[str, 
     competitor objections, budget concerns, and feature requests.
     """
     lead_id = _get(state, "lead_id", "unknown")
+    lead_data_from_state = _get(state, "lead_data", None)
     history = list(_get(state, "history", []))
 
     # ── 1. Retrieve lead firmographic data + interactions ──────────────────
-    lead_data = _SIMULATED_LEADS.get(lead_id)
+    lead_data = lead_data_from_state or _SIMULATED_LEADS.get(lead_id)
 
     if lead_data:
         lead_context = LeadContext(
